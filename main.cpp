@@ -11,10 +11,11 @@ enum FLAGS_SHIFT {
     is_solved = 11,
 };
 typedef vector<vector <uint16_t>> SOLUTION;
+typedef vector<vector <char>> BOARD;
 
 class Solution {
 public:
-    void solveSudoku(vector<vector<char>>& board)
+    void PrepareSolution(const BOARD &board, SOLUTION &solution)
     {
         for (unsigned int i = 0; i < board.size(); ++i)
             for (unsigned int j = 0; j < board.size(); ++j) {
@@ -23,13 +24,18 @@ public:
                 } else {
                     solution[i][j] = board[i][j] - '0';
                     WriteBit(solution[i][j], is_preset, true); //write preset flag
+                    WriteBit(solution[i][j], is_solved, true); //write preset flag
                 }
             }
+    }
+
+    void solveSudoku(vector<vector<char>>& board)
+    {
+        PrepareSolution(board, solution);
         DisplaySolution(solution);
     }
 private:
     SOLUTION solution {9, {9, 0}};
-
 
     bool ReadBit (uint16_t value, int shift)
     {
@@ -52,11 +58,11 @@ private:
                 if (ReadBit(solution[i][j], is_preset)) {
                     cout << "    " << (solution[i][j] & 0x00F) << "     ";
                 } else {
-                for (int k = 1; k < 10; k++) {
-                    bool  is_digit = (solution[i][j] >> (k - 1)) & 0x1;
-                    cout << (is_digit ? k : ' ');
-                }
-                cout  << ' ';
+                    for (int k = 1; k < 10; k++) {
+                        bool  is_digit = (solution[i][j] >> (k - 1)) & 0x1;
+                        cout << (is_digit ? k : ' ');
+                    }
+                    cout  << ' ';
                 }
             }
     }
