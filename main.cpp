@@ -10,9 +10,11 @@ enum FLAGS_SHIFT {
     is_guess = 10,
     is_solved = 11,
 };
+
 typedef vector<vector <uint16_t>> SOLUTION;
 typedef vector<vector <char>> BOARD;
 
+#define SIZE 9
 class Solution {
 public:
     void PrepareSolution(const BOARD &board, SOLUTION &solution)
@@ -33,10 +35,13 @@ public:
     {
         PrepareSolution(board, solution);
 
-        for (unsigned int i = 0; i < board.size(); ++i)
-            for (unsigned int j = 0; j < board.size(); ++j)
+        for (unsigned int i = 0; i < SIZE; ++i)
+            for (unsigned int j = 0; j < SIZE; ++j)
                 RemoveInvalidDigits(solution, i, j);
 
+        DisplaySolution(solution);
+        for (int i = 0; i < 11; ++i)
+            MarkAndExcludeSolved(solution);
         DisplaySolution(solution);
     }
 private:
@@ -56,21 +61,35 @@ private:
     }
     void DisplaySolution (const SOLUTION &solution)
     {
-        for (unsigned int i = 0; i < solution.size(); ++i)
-            for (unsigned int j = 0; j < solution.size(); ++j) {
+        for (unsigned int i = 0; i < SIZE; ++i)
+            for (unsigned int j = 0; j < SIZE; ++j) {
 
                 if(j == 0)
                     cout << endl;
-                if (ReadBit(solution[i][j], is_preset)) {
-                    cout << "    " << (solution[i][j] & 0x00F) << "     ";
+                if(j == 0 && (i % 3 == 0)) {
+                    for (int k = 0; k < SIZE * 10; ++k)
+                        cout << "_";
+                    cout << endl;
+                }
+                if (ReadBit(solution[i][j], is_solved)) {
+                    cout << "    " << (solution[i][j] & 0x00F) << "!   |";
                 } else {
                     for (int k = 1; k < 10; k++) {
-                        bool  is_digit = (solution[i][j] >> (k - 1)) & 0x1;
-                        cout << (is_digit ? k : ' ');
+                        bool is_digit = (solution[i][j] >> (k - 1)) & 0x1;
+                        if(is_digit)
+                            cout << k;
+                        else
+                            cout << " ";
                     }
-                    cout  << ' ';
+                    cout  << '|';
                 }
             }
+        cout << endl;
+        for (int k = 0; k < SIZE * 10; ++k)
+            cout << "_";
+        cout << endl;
+        cout << endl;
+    }
     void RemoveInvalidDigits(SOLUTION &solution, int i, int j)
     {
         if(!ReadBit(solution[i][j], is_solved))
@@ -93,13 +112,35 @@ private:
         const int sz = 3;
 
         int i_rounded = i - i % 3;
-         int j_rounded = j - j % 3;
+        int j_rounded = j - j % 3;
 
         for (int k = 0; k < sz; ++k)
             for (int l = 0; l < sz; ++l) {
-            if(!ReadBit(solution[k+i_rounded][l + j_rounded], is_solved))
-                WriteBit(solution[k+i_rounded][l + j_rounded], shift, false);
-        }
+                if(!ReadBit(solution[k+i_rounded][l + j_rounded], is_solved))
+                    WriteBit(solution[k+i_rounded][l + j_rounded], shift, false);
+            }
+    }
+    void MarkAndExcludeSolved(SOLUTION &solution)
+    {
+        for (unsigned int i = 0; i < SIZE; ++i)
+            for (unsigned int j = 0; j < SIZE; ++j) {
+                if(ReadBit(solution[i][j], is_solved))
+                    continue; // we should skip solved
+                int count = 0;
+                int shift_found = 0;
+                for (int shift = 0; shift < 9; ++shift)
+                    if (ReadBit(solution[i][j], shift)) {
+                        count++;
+                        shift_found = shift;
+                    }
+                if (count == 1) { //exactly one solution, let's mark it
+                    //cout << "marking " << j << " " << i << endl;
+                    int digit = shift_found + 1;
+                    solution[i][j] = digit + '0';
+                    WriteBit(solution[i][j], is_solved, true); //write preset flag
+                    RemoveInvalidDigits(solution, i, j);
+                }
+            }
     }
 };
 
