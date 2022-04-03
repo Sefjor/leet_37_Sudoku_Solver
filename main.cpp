@@ -32,10 +32,16 @@ public:
     void solveSudoku(vector<vector<char>>& board)
     {
         PrepareSolution(board, solution);
+
+        for (unsigned int i = 0; i < board.size(); ++i)
+            for (unsigned int j = 0; j < board.size(); ++j)
+                RemoveInvalidDigits(solution, i, j);
+
         DisplaySolution(solution);
     }
 private:
-    SOLUTION solution {9, {9, 0}};
+
+    SOLUTION solution {SIZE, {SIZE, 0}};
 
     bool ReadBit (uint16_t value, int shift)
     {
@@ -65,6 +71,35 @@ private:
                     cout  << ' ';
                 }
             }
+    void RemoveInvalidDigits(SOLUTION &solution, int i, int j)
+    {
+        if(!ReadBit(solution[i][j], is_solved))
+            return;
+        int value = solution[i][j] & 0x00F;
+        int shift = value - 1;
+
+        //column
+        for (int k = 0; k < SIZE; ++k) {
+            if(!ReadBit(solution[k][j], is_solved))
+                WriteBit(solution[k][j], shift, false);
+        }
+        //row
+        for (int k = 0; k < SIZE; ++k) {
+            if(!ReadBit(solution[i][k], is_solved))
+                WriteBit(solution[i][k], shift, false);
+        }
+
+        //3x3 square
+        const int sz = 3;
+
+        int i_rounded = i - i % 3;
+         int j_rounded = j - j % 3;
+
+        for (int k = 0; k < sz; ++k)
+            for (int l = 0; l < sz; ++l) {
+            if(!ReadBit(solution[k+i_rounded][l + j_rounded], is_solved))
+                WriteBit(solution[k+i_rounded][l + j_rounded], shift, false);
+        }
     }
 };
 
